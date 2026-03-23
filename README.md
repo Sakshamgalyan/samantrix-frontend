@@ -1,5 +1,3 @@
---color-forest-950: #051F20;
---color-forest-900: #0B2B26;
 --color-forest-800: #163832;
 --color-forest-700: #235347;
 --color-forest-300: #8EB69B;
