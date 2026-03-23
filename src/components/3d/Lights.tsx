@@ -1,10 +1,12 @@
-"use client";
-
 import React from "react";
+import { SoftShadows, Environment } from "@react-three/drei";
 
 export default function Lights() {
   return (
     <>
+      <SoftShadows size={25} samples={10} focus={0} />
+      <Environment preset="city" />
+
       {/* Ambient base light */}
       <ambientLight intensity={0.35} color="#e8e0ff" />
 

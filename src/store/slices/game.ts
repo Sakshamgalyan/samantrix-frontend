@@ -9,6 +9,10 @@ export interface PlayerState {
   rotation: { y: number };
   floor: number;
   isMoving: boolean;
+  customization?: {
+    hairStyle: string;
+    accessory: string;
+  };
 }
 
 export interface ChatMessage {

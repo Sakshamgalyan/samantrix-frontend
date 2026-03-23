@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import type { PlayerState } from "@/store/slices/game";
+import AvatarVisuals from "./AvatarVisuals";
 
 interface RemoteAvatarProps {
   player: PlayerState;
@@ -30,8 +31,11 @@ export default function RemoteAvatar({ player }: RemoteAvatarProps) {
     if (!groupRef.current) return;
     const clamped = Math.min(delta, 0.05);
 
-    // Smoothly interpolate position
-    groupRef.current.position.lerp(targetPos.current, clamped * 8);
+    // Smoothly interpolate position (X and Z only)
+    const dx = targetPos.current.x - groupRef.current.position.x;
+    const dz = targetPos.current.z - groupRef.current.position.z;
+    groupRef.current.position.x += dx * clamped * 8;
+    groupRef.current.position.z += dz * clamped * 8;
 
     // Smoothly interpolate rotation
     let rotDiff = targetRot.current - groupRef.current.rotation.y;
@@ -39,13 +43,16 @@ export default function RemoteAvatar({ player }: RemoteAvatarProps) {
     while (rotDiff < -Math.PI) rotDiff += 2 * Math.PI;
     groupRef.current.rotation.y += rotDiff * clamped * 8;
 
-    // Walking / idle bob
+    // Determine base Y from floor
+    const floorY = player.floor === 1 ? 0 : 4.15;
+
+    // Walking / idle bob on Y axis separately
     if (player.isMoving) {
       bobPhase.current += clamped * 12;
-      groupRef.current.position.y += Math.sin(bobPhase.current) * 0.06;
+      groupRef.current.position.y = floorY + Math.sin(bobPhase.current) * 0.06;
     } else {
       bobPhase.current += clamped * 2;
-      groupRef.current.position.y += Math.sin(bobPhase.current) * 0.02;
+      groupRef.current.position.y = floorY + Math.sin(bobPhase.current) * 0.02;
     }
   });
 
@@ -56,34 +63,7 @@ export default function RemoteAvatar({ player }: RemoteAvatarProps) {
       ref={groupRef}
       position={[player.position.x, player.position.y, player.position.z]}
     >
-      {/* Body */}
-      <mesh position={[0, 0.7, 0]} castShadow>
-        <capsuleGeometry args={[0.25, 0.6, 8, 16]} />
-        <meshStandardMaterial color={color} roughness={0.5} metalness={0.2} />
-      </mesh>
-      {/* Head */}
-      <mesh position={[0, 1.35, 0]} castShadow>
-        <sphereGeometry args={[0.2, 16, 16]} />
-        <meshStandardMaterial color={color} roughness={0.4} metalness={0.15} />
-      </mesh>
-      {/* Eyes */}
-      <mesh position={[-0.08, 1.38, 0.16]}>
-        <sphereGeometry args={[0.04, 8, 8]} />
-        <meshStandardMaterial color="#ffffff" />
-      </mesh>
-      <mesh position={[0.08, 1.38, 0.16]}>
-        <sphereGeometry args={[0.04, 8, 8]} />
-        <meshStandardMaterial color="#ffffff" />
-      </mesh>
-      {/* Pupils */}
-      <mesh position={[-0.08, 1.38, 0.19]}>
-        <sphereGeometry args={[0.02, 8, 8]} />
-        <meshStandardMaterial color="#1a1a2e" />
-      </mesh>
-      <mesh position={[0.08, 1.38, 0.19]}>
-        <sphereGeometry args={[0.02, 8, 8]} />
-        <meshStandardMaterial color="#1a1a2e" />
-      </mesh>
+      <AvatarVisuals color={color} customization={player.customization} />
       {/* Username label */}
       <Html
         position={[0, 1.8, 0]}

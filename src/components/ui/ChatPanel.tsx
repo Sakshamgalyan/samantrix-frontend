@@ -46,6 +46,11 @@ export default function ChatPanel() {
     }
   };
 
+  const formatTime = (ts: number | undefined) => {
+    if (!ts) return "";
+    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <div className={`hud-panel chat-panel ${showChat ? "open" : "collapsed"}`}>
       {!showChat ? (
@@ -70,19 +75,38 @@ export default function ChatPanel() {
             {chatMessages.length === 0 ? (
               <div className="chat-empty">No messages yet. Say hello! 👋</div>
             ) : (
-              chatMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`chat-message ${
-                    msg.playerId === localPlayer?.id ? "own" : ""
-                  }`}
-                >
-                  <span className="chat-author" style={{ color: msg.color }}>
-                    {msg.username}
-                  </span>
-                  <span className="chat-text">{msg.message}</span>
-                </div>
-              ))
+              chatMessages.map((msg) => {
+                const isOwn = msg.playerId === localPlayer?.id;
+                return (
+                  <div
+                    key={msg.id}
+                    className={`chat-message ${isOwn ? "own" : ""}`}
+                    style={{
+                      padding: '8px 12px',
+                      background: isOwn ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                      border: isOwn ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid rgba(255, 255, 255, 0.05)',
+                      borderRadius: '12px',
+                      borderBottomRightRadius: isOwn ? '4px' : '12px',
+                      borderBottomLeftRadius: !isOwn ? '4px' : '12px',
+                      alignSelf: isOwn ? 'flex-end' : 'flex-start',
+                      maxWidth: '85%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                      <span className="chat-author" style={{ color: msg.color, fontSize: '11px' }}>
+                        {msg.username}
+                      </span>
+                      <span style={{ fontSize: '9px', color: '#64748b' }}>
+                        {formatTime(msg.timestamp)}
+                      </span>
+                    </div>
+                    <span className="chat-text" style={{ fontSize: '13px', lineHeight: 1.4, color: '#e2e8f0' }}>{msg.message}</span>
+                  </div>
+                );
+              })
             )}
             <div ref={messagesEndRef} />
           </div>

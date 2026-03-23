@@ -2,12 +2,16 @@
 
 import React, { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Stats } from "@react-three/drei";
+import { ContactShadows, Stats } from "@react-three/drei";
 import OfficeBuilding from "./OfficeBuilding";
 import LocalAvatar, { teleportPlayer } from "./LocalAvatar";
 import RemoteAvatar from "./RemoteAvatar";
 import Lights from "./Lights";
 import { useAppSelector } from "@/store/hooks";
+import { PlayerState } from "@/store/slices/game";
+import { Physics } from "@react-three/rapier";
+import { Provider } from "react-redux";
+import { store } from "@/store";
 
 function RemoteAvatars() {
   const remotePlayers = useAppSelector((s) => s.game.remotePlayers);
@@ -54,15 +58,22 @@ export default function OfficeScene() {
         gl.toneMappingExposure = 1.1;
       }}
     >
+      <color attach="background" args={["#c7d2cc"]} />
       {/* Fog for depth */}
       <fog attach="fog" args={["#c7d2cc", 40, 120]} />
 
       <Suspense fallback={null}>
-        <Lights />
-        <OfficeBuilding onElevator={handleElevator} />
-        <LocalAvatar />
-        <RemoteAvatars />
+        <Provider store={store}>
+          <Physics gravity={[0, -9.81, 0]}>
+            <Lights />
+            <ContactShadows opacity={0.4} scale={50} blur={2} far={10} resolution={512} color="#000000" />
+            <OfficeBuilding onElevator={handleElevator} />
+            <LocalAvatar />
+            <RemoteAvatars />
+          </Physics>
+        </Provider>
       </Suspense>
+
 
       {/* Performance stats in dev */}
       {process.env.NODE_ENV === "development" && <Stats />}

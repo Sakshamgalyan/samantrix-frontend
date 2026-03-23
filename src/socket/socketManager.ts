@@ -1,5 +1,6 @@
 import { io, Socket } from "socket.io-client";
 import { store } from "@/store";
+import Cookies from "js-cookie";
 import {
   setLocalPlayer,
   setRemotePlayers,
@@ -12,8 +13,7 @@ import {
   type ChatMessage,
 } from "@/store/slices/game";
 
-const SOCKET_URL =
-  process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:6000";
+const SOCKET_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
 
 let socket: Socket | null = null;
 let moveThrottleTimer: ReturnType<typeof setTimeout> | null = null;
@@ -21,17 +21,32 @@ let moveThrottleTimer: ReturnType<typeof setTimeout> | null = null;
 export function connectSocket(username: string): Socket {
   if (socket?.connected) return socket;
 
+  const token = Cookies.get("access_token");
+
   socket = io(SOCKET_URL, {
     transports: ["websocket", "polling"],
     autoConnect: true,
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    auth: {
+      token: token,
+    },
   });
 
   socket.on("connect", () => {
+    console.log("[Socket] Connected:", socket!.id);
     store.dispatch(setConnected(true));
     socket!.emit("player:join", { username });
   });
 
-  socket.on("disconnect", () => {
+  socket.on("connect_error", (error) => {
+    console.warn("[Socket] Connection error:", error.message);
+  });
+
+  socket.on("disconnect", (reason) => {
+    console.log("[Socket] Disconnected:", reason);
     store.dispatch(setConnected(false));
   });
 
